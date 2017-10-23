@@ -4,7 +4,7 @@
 
 	<groupId>au.edu.unimelb.daris</groupId>
 	<artifactId>daris-commons-net-plugin</artifactId>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<packaging>jar</packaging>
 
 	<name>daris-commons-net-plugin</name>
@@ -20,6 +20,7 @@
 		<maven.compiler.target>1.7</maven.compiler.target>
 		<maven.build.timestamp.format>dd-MMM-yyyy HH:mm:ss z</maven.build.timestamp.format>
 		<require.mflux.version>4.4.011</require.mflux.version>
+		<maven.test.skip>true</maven.test.skip>
 	</properties>
 	<!-- DaRIS maven repository on github.com -->
 	<repositories>

@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.net.ftp.FTP;
 
-import daris.util.PathUtils;
+import io.github.xtman.util.PathUtils;
 
 public class FTPClientImpl implements FTPClient {
 

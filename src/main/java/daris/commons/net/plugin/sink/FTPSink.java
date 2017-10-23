@@ -8,6 +8,7 @@ import arc.mf.plugin.dtype.BooleanType;
 import arc.mf.plugin.dtype.IntegerType;
 import arc.mf.plugin.dtype.PasswordType;
 import arc.mf.plugin.dtype.StringType;
+import arc.mf.plugin.sink.ParameterDefinition;
 import arc.mime.NamedMimeType;
 import arc.streams.LongInputStream;
 import arc.xml.XmlDoc.Element;
@@ -15,7 +16,7 @@ import daris.commons.net.ftp.FTPClient;
 import daris.commons.net.ftp.FTPClientFactory;
 import daris.plugin.sink.AbstractDataSink;
 import daris.plugin.sink.util.OutputPath;
-import daris.util.PathUtils;
+import io.github.xtman.util.PathUtils;
 
 public class FTPSink extends AbstractDataSink {
 
@@ -32,17 +33,6 @@ public class FTPSink extends AbstractDataSink {
 
     public FTPSink() throws Throwable {
         super(TYPE_NAME);
-
-        /*
-         * init param definitions
-         */
-        addParameterDefinition(PARAM_HOST, StringType.DEFAULT, "FTP server host.");
-        addParameterDefinition(PARAM_PORT, new IntegerType(1, 65535), "FTP server port. Defaults to 21.");
-        addParameterDefinition(PARAM_USERNAME, StringType.DEFAULT, "FTP username.");
-        addParameterDefinition(PARAM_PASSWORD, PasswordType.DEFAULT, "FTP password.");
-        addParameterDefinition(PARAM_DIRECTORY, StringType.DEFAULT,
-                "The default/base directory on the FTP server. If not specified, defaults to user's home directory.");
-        addParameterDefinition(PARAM_UNARCHIVE, BooleanType.DEFAULT, "Extract archive contents. Defaults to false.");
     }
 
     public String[] acceptedTypes() throws Throwable {
@@ -70,14 +60,7 @@ public class FTPSink extends AbstractDataSink {
         }
         String directory = params.get(PARAM_DIRECTORY);
         String assetSpecificOutputPath = multiTransferContext != null ? null : getAssetSpecificOutput(params);
-        boolean unarchive = false;
-        if (params.containsKey(PARAM_UNARCHIVE)) {
-            try {
-                unarchive = Boolean.parseBoolean(params.get(PARAM_UNARCHIVE));
-            } catch (Throwable e) {
-                unarchive = false;
-            }
-        }
+        boolean unarchive = Boolean.parseBoolean(params.getOrDefault(PARAM_UNARCHIVE, "false"));
         String mimeType = streamMimeType;
         if (mimeType == null && assetMeta != null) {
             mimeType = assetMeta.value("content/type");
@@ -97,10 +80,14 @@ public class FTPSink extends AbstractDataSink {
                 ArchiveInput.Entry entry;
                 try {
                     while ((entry = ai.next()) != null) {
-                        if (entry.isDirectory()) {
-                            client.mkdirs(PathUtils.join(dirPath, entry.name()));
-                        } else {
-                            client.put(PathUtils.join(dirPath, entry.name()), entry.stream());
+                        try {
+                            if (entry.isDirectory()) {
+                                client.mkdirs(PathUtils.join(dirPath, entry.name()));
+                            } else {
+                                client.put(PathUtils.join(dirPath, entry.name()), entry.stream());
+                            }
+                        } finally {
+                            ai.closeEntry();
                         }
                     }
                 } finally {
@@ -162,6 +149,38 @@ public class FTPSink extends AbstractDataSink {
     @Override
     public String description() throws Throwable {
         return "FTP sink.";
+    }
+
+    @Override
+    protected void addParameterDefinitions(Map<String, ParameterDefinition> paramDefns) throws Throwable {
+        /*
+         * init param definitions
+         */
+        // @formatter:off
+        
+        // {{                 --- start
+        // }}                 --- end
+        // default=DEFAULT    --- default value
+        // admin              --- for admin only, should not be presented to end user
+        // text               --- multiple lines text
+        // optional           --- optional
+        // xor=PARAM1|PARAM2  --- 
+        // mutable            --- 
+        // pattern=PATTERN    --- regex pattern to validate string value
+        // enum=VALUE1|VALUE2 --- enumerated values
+        
+        // @formatter:on
+        addParameterDefinition(paramDefns, PARAM_HOST, StringType.DEFAULT, "FTP server host.", false);
+        addParameterDefinition(paramDefns, PARAM_PORT, new IntegerType(1, 65535),
+                "FTP server port. Defaults to 21.{{default=21}}", false);
+        addParameterDefinition(paramDefns, PARAM_USERNAME, StringType.DEFAULT, "FTP username.", false);
+        addParameterDefinition(paramDefns, PARAM_PASSWORD, PasswordType.DEFAULT, "FTP password.", false);
+        addParameterDefinition(paramDefns, PARAM_DIRECTORY, StringType.DEFAULT,
+                "The default/base directory on the FTP server. If not specified, defaults to user's home directory.{{optional,mutable}}",
+                false);
+        addParameterDefinition(paramDefns, PARAM_UNARCHIVE, BooleanType.DEFAULT,
+                "Extract archive contents. Defaults to false.{{optional,mutable,default=false}}", false);
+
     }
 
 }
